@@ -15,7 +15,8 @@ import 'package:redux/redux.dart';
  * Date: 2018-07-16
  */
 class DynamicPage extends StatefulWidget {
-  DynamicPage({Key? super.key});
+  final bool userIos;
+  DynamicPage({Key? super.key, this.userIos = false});
 
   @override
   DynamicPageState createState() => DynamicPageState();
@@ -35,21 +36,25 @@ class DynamicPageState extends State<DynamicPage>
       new GlobalKey<RefreshIndicatorState>();
 
   /// true：列表不可以点击，false：下拉刷新请求完毕后，列表可以点击
-  bool _ignoring = true;
+  bool _ignoring = false;
 
   /// 模拟IOS下拉显示刷新
   showRefreshLoading() {
     /// 直接触发下拉
     /// 141：140可以触发下拉刷新，所以这里设置141
     new Future.delayed(const Duration(milliseconds: 500), () {
-      scrollController
-          .animateTo(-141,
-              duration: Duration(milliseconds: 600), curve: Curves.linear)
-          .then((_) {
-        /*setState(() {
-          _ignoring = false;
-        });*/
-      });
+      if (widget.userIos) {
+        scrollController
+            .animateTo(-141,
+            duration: Duration(milliseconds: 600), curve: Curves.linear)
+            .then((_) {
+          /*setState(() {
+            _ignoring = false;
+          });*/
+        });
+      } else {
+        refreshIndicatorKey.currentState?.show();
+      }
       return true;
     });
   }
@@ -166,7 +171,7 @@ class DynamicPageState extends State<DynamicPage>
       scrollController: scrollController,
 
       ///使用ios模式的下拉刷新
-      userIos: true,
+      userIos: widget.userIos,
     );
     // 刷新的时候列表不可以点击
     // https://blog.csdn.net/mengks1987/article/details/105440465

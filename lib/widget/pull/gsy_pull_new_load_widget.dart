@@ -65,23 +65,36 @@ class _GSYPullLoadWidgetState extends State<GSYPullLoadWidget>
 
   final GlobalKey<IOS.CupertinoSliverRefreshControlState> sliverRefreshKey =
       GlobalKey<IOS.CupertinoSliverRefreshControlState>();
-
+  /// 控制iOS下拉和动态列表的sliver滑动
   ScrollController? _scrollController;
 
+  /// 刷新动作前设置true，刷新动作完毕设置为false
+  /// 控制是否调用onRefresh（页面刷新请求）
   bool isRefreshing = false;
 
+  /// 同isRefreshing
   bool isLoadMoring = false;
 
+  /// GSYFlarePullController属性覆盖
+  /// flare_flutter包需要
   @override
   ValueNotifier<bool> isActive = ValueNotifier<bool>(true);
 
   @override
   void initState() {
+    /// 持有页面层传递过来的scrollController
     _scrollController = widget.scrollController ?? new ScrollController();
 
-    ///增加滑动监听
+    /// 增加滑动监听
     _scrollController!.addListener(() {
-      ///判断当前滑动位置是不是到达底部，触发加载更多回调
+      /// 判断当前滑动位置是不是到达底部，触发加载更多回调
+      /// maxScrollExtent：
+      /// 此值通常应为非空值且大于或等于 minScrollExtent。 如果卷轴是无界的，它可以是无穷大。
+      /// 上拉的最大偏移量，手动上拉时候会超过这个值，松开就回弹
+      /// pixels:
+      /// 当前列表的偏移量，下拉是负值，上拉是正值
+      /// 上拉请求触发条件
+      /// print(_scrollController!.position.pixels);
       if (_scrollController!.position.pixels ==
           _scrollController!.position.maxScrollExtent) {
         if (widget.control.needLoadMore) {
@@ -93,6 +106,7 @@ class _GSYPullLoadWidgetState extends State<GSYPullLoadWidget>
     /// 注释掉，上拉加载动画会一直在，因为不会重绘
     widget.control.addListener(() {
       setState(() {});
+      /// 暂时不知道有啥用！！！
       try {
         Future.delayed(Duration(seconds: 2), () {
           // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
@@ -151,6 +165,7 @@ class _GSYPullLoadWidgetState extends State<GSYPullLoadWidget>
     }
   }
 
+  /// 每秒判断下是否在loading，如果在就继续等待
   _lockToAwait() async {
     ///if loading, lock to await
     doDelayed() async {
@@ -168,6 +183,9 @@ class _GSYPullLoadWidgetState extends State<GSYPullLoadWidget>
 
   @protected
   Future<Null> handleRefresh() async {
+    /// isLoading：是否在刷新请求或加载更多请求
+    /// 如果是刷新请求，那么返回；
+    /// 反之，那就是加载更多请求，这时候等待加载更多完成
     if (widget.control.isLoading) {
       if (isRefreshing) {
         return null;
@@ -178,6 +196,7 @@ class _GSYPullLoadWidgetState extends State<GSYPullLoadWidget>
     }
     widget.control.isLoading = true;
     isRefreshing = true;
+    /// 调用页面的刷新请求
     await widget.onRefresh?.call();
     isRefreshing = false;
     widget.control.isLoading = false;
@@ -186,6 +205,7 @@ class _GSYPullLoadWidgetState extends State<GSYPullLoadWidget>
 
   @protected
   Future<Null> handleLoadMore() async {
+    /// 同上刷新等待
     if (widget.control.isLoading) {
       if (isLoadMoring) {
         return null;
@@ -196,6 +216,7 @@ class _GSYPullLoadWidgetState extends State<GSYPullLoadWidget>
     }
     isLoadMoring = true;
     widget.control.isLoading = true;
+    /// 调用页面的加载更多请求
     await widget.onLoadMore?.call();
     isLoadMoring = false;
     widget.control.isLoading = false;
@@ -406,7 +427,7 @@ class GSYPullLoadWidgetControl extends ChangeNotifier {
 
   set needHeader(value) {
     _needHeader = value;
-    //notifyListeners();
+    notifyListeners();
   }
 
   get needHeader => _needHeader;
