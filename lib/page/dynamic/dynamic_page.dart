@@ -21,21 +21,26 @@ class DynamicPage extends StatefulWidget {
   DynamicPageState createState() => DynamicPageState();
 }
 
+/// AutomaticKeepAliveClientMixin：保持页面状态
+/// WidgetsBindingObserver：监测页面生命周期
+/// https://www.jianshu.com/p/2fd5562c1c9b
 class DynamicPageState extends State<DynamicPage>
     with AutomaticKeepAliveClientMixin<DynamicPage>, WidgetsBindingObserver {
   final DynamicBloc dynamicBloc = new DynamicBloc();
 
-  ///控制列表滚动和监听
+  /// 控制列表滚动和监听
   final ScrollController scrollController = new ScrollController();
 
   final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
 
+  /// true：列表不可以点击，false：下拉刷新请求完毕后，列表可以点击
   bool _ignoring = true;
 
   /// 模拟IOS下拉显示刷新
   showRefreshLoading() {
-    ///直接触发下拉
+    /// 直接触发下拉
+    /// 141：140可以触发下拉刷新，所以这里设置141
     new Future.delayed(const Duration(milliseconds: 500), () {
       scrollController
           .animateTo(-141,
@@ -51,6 +56,7 @@ class DynamicPageState extends State<DynamicPage>
 
   scrollToTop() {
     if (scrollController.offset <= 0) {
+      /// 回到顶部，然后再触发下拉刷新
       scrollController
           .animateTo(0,
               duration: Duration(milliseconds: 600), curve: Curves.linear)
@@ -58,6 +64,7 @@ class DynamicPageState extends State<DynamicPage>
         showRefreshLoading();
       });
     } else {
+      /// 仅回到顶部
       scrollController.animateTo(0,
           duration: Duration(milliseconds: 600), curve: Curves.linear);
     }
@@ -70,6 +77,8 @@ class DynamicPageState extends State<DynamicPage>
         .catchError((e) {
       print(e);
     });
+    /// 下拉刷新后，更新_ignoring = false，进行重新绘制
+    /// 使列表可以接收事件，例如下拉滑动事件、点击动态Item事件
     setState(() {
       _ignoring = false;
     });
@@ -109,6 +118,7 @@ class DynamicPageState extends State<DynamicPage>
   void didChangeDependencies() {
     ///请求更新
     if (dynamicBloc.getDataLength() == 0) {
+      /// 因为动态列表没有头部，所以直接写死
       dynamicBloc.changeNeedHeaderStatus(false);
 
       ///先读数据库
@@ -143,6 +153,8 @@ class DynamicPageState extends State<DynamicPage>
 
   @override
   Widget build(BuildContext context) {
+    // AutomaticKeepAlive详解
+    // https://juejin.cn/post/6979972557575782407
     super.build(context); // See AutomaticKeepAliveClientMixin.
     var content = GSYPullLoadWidget(
       dynamicBloc.pullLoadWidgetControl,
@@ -156,6 +168,9 @@ class DynamicPageState extends State<DynamicPage>
       ///使用ios模式的下拉刷新
       userIos: true,
     );
+    // 刷新的时候列表不可以点击
+    // https://blog.csdn.net/mengks1987/article/details/105440465
+    // https://www.jianshu.com/p/6df5f0cea0bc
     return IgnorePointer(
       ignoring: _ignoring,
       child: content,

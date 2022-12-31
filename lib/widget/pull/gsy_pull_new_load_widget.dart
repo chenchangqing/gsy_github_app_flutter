@@ -14,23 +14,38 @@ const double iosRefreshIndicatorExtent = 100;
 
 ///通用下上刷新控件
 class GSYPullLoadWidget extends StatefulWidget {
-  ///item渲染
+  /// item渲染
+  /// 动态Item的绘制
   final IndexedWidgetBuilder itemBuilder;
 
-  ///加载更多回调
+  /// 加载更多回调
+  /// 通过暴露该回调函数，可以将上拉加载的网络请求放在页面层
+  /// 等待请求完毕会直接更新control数据控制层，
+  /// 然后通过监听数据变化，调用setState，使页面重绘
   final RefreshCallback? onLoadMore;
 
-  ///下拉刷新回调
+  /// 下拉刷新回调
+  /// 同onLoadMore，页面层请求数据后更新数据，通知页面重新绘制
   final RefreshCallback? onRefresh;
 
-  ///控制器，比如数据和一些配置
+  /// 控制器，比如数据和一些配置
+  /// 管理页面数据，例如：动态列表、是否需要显示更多、是否正在加载数据等
+  /// 注意：needHeader这个属性目前是写死了为false，因为这个列表没有头部UI
   final GSYPullLoadWidgetControl control;
 
+  /// 页面层传入，主要是为了让页面层控制列表的滑动
+  /// 例如：页面层使列表回到顶部、触发下拉刷新等操作
   final ScrollController? scrollController;
 
+  /// 是否使用iOS的下拉刷新
+  /// 注意：如果此参数传false，依然无法触发android下拉刷新
+  /// 因为页面层通过设置_ignore为true，使得列表不响应下拉事件
+  /// 所以还需要将_ignore设置为false
   final bool userIos;
 
-  ///刷新key
+  /// 刷新key，android下拉刷新使用
+  /// 注意：因为目前项目使用的是iOS的下拉刷新，暂时没地方使用
+  /// 默认情况我们都是通过下拉触发刷新
   final Key? refreshKey;
 
   GSYPullLoadWidget(
@@ -42,6 +57,9 @@ class GSYPullLoadWidget extends StatefulWidget {
 }
 
 class _GSYPullLoadWidgetState extends State<GSYPullLoadWidget>
+    /// GSYFlarePullController：构建下拉刷新动画使用
+    /// 使用了flare_flutter包实现
+    /// https://pub.dev/packages/flare_flutter
     with GSYFlarePullController {
   //with GSYFlarePullMutliController {
 
@@ -71,7 +89,8 @@ class _GSYPullLoadWidgetState extends State<GSYPullLoadWidget>
         }
       }
     });
-
+    /// 监听了上拉加载，数据请求完毕，调用setState进行重绘
+    /// 注释掉，上拉加载动画会一直在，因为不会重绘
     widget.control.addListener(() {
       setState(() {});
       try {
@@ -387,7 +406,7 @@ class GSYPullLoadWidgetControl extends ChangeNotifier {
 
   set needHeader(value) {
     _needHeader = value;
-    notifyListeners();
+    //notifyListeners();
   }
 
   get needHeader => _needHeader;

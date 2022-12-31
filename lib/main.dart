@@ -22,7 +22,8 @@ void main() {
       config: EnvConfig.fromJson(config),
     ));
     ///屏幕刷新率和显示率不一致时的优化，必须挪动到 runApp 之后
-    GestureBinding.instance.resamplingEnabled = true;
+    ///https://github.com/flutter/flutter/issues/78683
+    // GestureBinding.instance.resamplingEnabled = true;
   }, (Object obj, StackTrace stack) {
     print(obj);
     print(stack);
