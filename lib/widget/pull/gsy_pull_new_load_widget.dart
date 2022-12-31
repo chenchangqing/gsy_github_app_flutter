@@ -9,7 +9,9 @@ import 'package:gsy_github_app_flutter/common/style/gsy_style.dart';
 import 'custom_bouncing_scroll_physics.dart';
 import 'gsy_flare_pull_controller.dart';
 
+/// 下拉超过设定的高度后触发刷新
 const double iosRefreshHeight = 140;
+/// 触发刷新后，正在刷新的高度
 const double iosRefreshIndicatorExtent = 100;
 
 ///通用下上刷新控件
