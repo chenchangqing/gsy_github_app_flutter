@@ -1,22 +1,23 @@
 import 'dart:async';
 
 import 'package:animations/animations.dart';
-import 'package:gsy_github_app_flutter/page/repos/repository_detail_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:gsy_github_app_flutter/common/localization/default_localizations.dart';
-import 'package:gsy_github_app_flutter/page/trend/trend_bloc.dart';
-import 'package:gsy_github_app_flutter/model/TrendingRepoModel.dart';
-import 'package:gsy_github_app_flutter/page/trend/trend_user_page.dart';
-import 'package:gsy_github_app_flutter/redux/gsy_state.dart';
 import 'package:gsy_github_app_flutter/common/style/gsy_style.dart';
 import 'package:gsy_github_app_flutter/common/utils/navigator_utils.dart';
+import 'package:gsy_github_app_flutter/model/TrendingRepoModel.dart';
+import 'package:gsy_github_app_flutter/page/repos/repository_detail_page.dart';
+import 'package:gsy_github_app_flutter/page/repos/widget/repos_item.dart';
+import 'package:gsy_github_app_flutter/page/trend/trend_bloc.dart';
+import 'package:gsy_github_app_flutter/page/trend/trend_user_page.dart';
+import 'package:gsy_github_app_flutter/redux/gsy_state.dart';
 import 'package:gsy_github_app_flutter/widget/gsy_card_item.dart';
 import 'package:gsy_github_app_flutter/widget/pull/nested/gsy_sliver_header_delegate.dart';
 import 'package:gsy_github_app_flutter/widget/pull/nested/nested_refresh.dart';
-import 'package:gsy_github_app_flutter/page/repos/widget/repos_item.dart';
 import 'package:redux/redux.dart';
 
 /**
@@ -35,6 +36,8 @@ class TrendPage extends StatefulWidget {
 class TrendPageState extends State<TrendPage>
     with
         AutomaticKeepAliveClientMixin<TrendPage>,
+
+        /// 固定头部需要该类型的参数
         SingleTickerProviderStateMixin {
   ///显示数据时间
   TrendTypeModel? selectTime = null;
@@ -62,6 +65,7 @@ class TrendPageState extends State<TrendPage>
     });
   }
 
+  /// 双击Tab置顶或置顶刷新
   scrollToTop() {
     if (scrollController.offset <= 0) {
       scrollController
@@ -79,13 +83,18 @@ class TrendPageState extends State<TrendPage>
   ///绘制tiem
   _renderItem(e) {
     ReposViewModel reposViewModel = ReposViewModel.fromTrendMap(e);
+
+    /// OpenContainer：打开页面的过渡动画
+    /// https://blog.csdn.net/zl18603543572/article/details/107830140
     return OpenContainer(
       closedColor: Colors.transparent,
       closedElevation: 0,
       transitionType: ContainerTransitionType.fade,
       openBuilder: (BuildContext context, VoidCallback _) {
-        return NavigatorUtils.pageContainer(RepositoryDetailPage(
-            reposViewModel.ownerName, reposViewModel.repositoryName), context);
+        return NavigatorUtils.pageContainer(
+            RepositoryDetailPage(
+                reposViewModel.ownerName, reposViewModel.repositoryName),
+            context);
       },
       tappable: true,
       closedBuilder: (BuildContext _, VoidCallback openContainer) {
@@ -105,20 +114,27 @@ class TrendPageState extends State<TrendPage>
       color: store.state.themeData!.primaryColor,
       margin: EdgeInsets.all(0.0),
       shape: new RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(radius),
+        borderRadius: BorderRadius.all(radius), //radius: 通过参数传入
       ),
       child: new Padding(
         padding:
             new EdgeInsets.only(left: 0.0, top: 5.0, right: 0.0, bottom: 5.0),
         child: new Row(
           children: <Widget>[
+            /// 渲染周期
             _renderHeaderPopItem(selectTime!.name, trendTimeList,
                 (TrendTypeModel result) {
+              /// 选中项目后的操作
+              /// 当正在请求的时候，如果点击选择项目，
+              /// 此次选择不生效，并且给出提示信息
               if (trendBloc.isLoading) {
+                /// 提示封装
                 Fluttertoast.showToast(
                     msg: GSYLocalizations.i18n(context)!.loading_text);
                 return;
               }
+
+              /// 选择完事件后，列表置顶，设置选择值
               scrollController
                   .animateTo(0,
                       duration: Duration(milliseconds: 200),
@@ -128,10 +144,16 @@ class TrendPageState extends State<TrendPage>
                   selectTime = result;
                   selectTimeIndex = trendTimeList.indexOf(result);
                 });
+
+                /// 触发下拉刷新
                 _showRefreshLoading();
               });
             }),
+
+            /// 分割线
             new Container(height: 10.0, width: 0.5, color: GSYColors.white),
+
+            /// 渲染语言
             _renderHeaderPopItem(selectType!.name, trendTypeList,
                 (TrendTypeModel result) {
               if (trendBloc.isLoading) {
@@ -161,6 +183,7 @@ class TrendPageState extends State<TrendPage>
   _renderHeaderPopItem(String data, List<TrendTypeModel> list,
       PopupMenuItemSelected<TrendTypeModel> onSelected) {
     return new Expanded(
+      /// 选项按钮
       child: new PopupMenuButton<TrendTypeModel>(
         child: new Center(
             child: new Text(data, style: GSYConstant.middleTextWhite)),
@@ -174,6 +197,7 @@ class TrendPageState extends State<TrendPage>
 
   ///或者头部可选弹出item
   _renderHeaderPopItemChild(List<TrendTypeModel> data) {
+    /// 构建选项列表
     List<PopupMenuEntry<TrendTypeModel>> list = [];
     for (TrendTypeModel item in data) {
       list.add(PopupMenuItem<TrendTypeModel>(
@@ -184,22 +208,30 @@ class TrendPageState extends State<TrendPage>
     return list;
   }
 
+  /// 刷新请求
   Future<void> requestRefresh() async {
     return trendBloc.requestRefresh(selectTime, selectType);
   }
 
+  /// 页面保活
   @override
   bool get wantKeepAlive => true;
 
   @override
   void didChangeDependencies() {
     if (!trendBloc.requested) {
+      /// 如果没有请求过，选择项默认第一个
       setState(() {
         selectTime = trendTime(context)[0];
         selectType = trendType(context)[0];
       });
+
+      /// 显示下拉刷新，发起请求
       _showRefreshLoading();
     } else {
+      /// 发起redux请求时，会再次进入`didChangeDependencies`
+      /// 如果请求完成，重新绘制
+      /// 下面这两个if其实没啥用，因为选择项目后，就会设置selectTime、selectType
       if (selectTimeIndex >= 0) {
         selectTime = trendTime(context)[selectTimeIndex];
       }
@@ -213,8 +245,11 @@ class TrendPageState extends State<TrendPage>
 
   ///空页面
   Widget _buildEmpty() {
+    /// 获取状态栏高度（顶部安全距离）
     var statusBar =
         MediaQueryData.fromWindow(WidgetsBinding.instance.window).padding.top;
+
+    /// 获取底部安全距离
     var bottomArea = MediaQueryData.fromWindow(WidgetsBinding.instance.window)
         .padding
         .bottom;
@@ -222,7 +257,11 @@ class TrendPageState extends State<TrendPage>
         statusBar -
         bottomArea -
         kBottomNavigationBarHeight -
+
+        /// BottomNavigationBar 高度
         kToolbarHeight;
+
+    /// AppBar 高度
     return SingleChildScrollView(
       child: new Container(
         height: height,
@@ -268,11 +307,12 @@ class TrendPageState extends State<TrendPage>
                     controller: scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     headerSliverBuilder: (context, innerBoxIsScrolled) {
+                      /// 头部构建
                       return _sliverBuilder(context, innerBoxIsScrolled, store);
                     },
                     body: (snapShot.data == null || snapShot.data!.length == 0)
-                        ? _buildEmpty()
-                        : new ListView.builder(
+                        ? _buildEmpty()/// 空页面构建
+                        : new ListView.builder(/// 列表构建
                             physics: const AlwaysScrollableScrollPhysics(),
                             itemBuilder: (context, index) {
                               return _renderItem(snapShot.data![index]);
@@ -296,12 +336,15 @@ class TrendPageState extends State<TrendPage>
       openBuilder: (BuildContext context, VoidCallback _) {
         return NavigatorUtils.pageContainer(new TrendUserPage(), context);
       },
+      /// 按钮阴影
       closedElevation: 6.0,
+      /// 按钮形状
       closedShape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(
           Radius.circular(size / 2),
         ),
       ),
+      /// 按钮背景色
       closedColor: Theme.of(context).colorScheme.secondary,
       closedBuilder: (BuildContext context, VoidCallback openContainer) {
         return SizedBox(
@@ -330,14 +373,22 @@ class TrendPageState extends State<TrendPage>
             maxHeight: 65,
             minHeight: 65,
             changeSize: true,
+            /// 一个 [TickerProvider] 在动画标题的大小变化时使用。
+            /// https://www.jianshu.com/p/0205c3c78a25
             vSyncs: this,
+            /// 指定浮动标题在视图内外的动画效果。
             snapConfig: FloatingHeaderSnapConfiguration(
               curve: Curves.bounceInOut,
               duration: const Duration(milliseconds: 10),
             ),
             builder: (BuildContext context, double shrinkOffset,
                 bool overlapsContent) {
-              ///根据数值计算偏差
+              if (kDebugMode) {
+                print('shrink: $shrinkOffset，overlaps:$overlapsContent');
+              }
+              /// 根据数值计算偏差
+              /// 刚好到顶时shrinkOffset为0，继续往上shrinkOffset值增加
+              /// 根据上移的偏移量设置上、左、右的边距，还有圆角
               var lr = 10 - shrinkOffset / 65 * 10;
               var radius = Radius.circular(4 - shrinkOffset / 65 * 4);
               return SizedBox.expand(

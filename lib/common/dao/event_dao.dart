@@ -8,13 +8,20 @@ import 'package:gsy_github_app_flutter/common/net/address.dart';
 import 'package:gsy_github_app_flutter/common/net/api.dart';
 
 class EventDao {
+  /// 刷新：加载本地数据，触发网络请求
+  /// 加载更多：直接发起网络请求
+  /// 注意：只缓存第一页数据，首次进入的时候会优先使用本地数据，
+  /// 然后触发刷新网络请求，更新本地数据，同时刷新列表
   static getEventReceived(String? userName,
       {page = 1, bool needDb = false}) async {
+    /// userName：用于拼接API地址
     if (userName == null) {
       return null;
     }
+    /// 动态表查询/更新管理
     ReceivedEventDbProvider provider = new ReceivedEventDbProvider();
-
+    /// 网络数据加载
+    /// 本地没有数据时调用、本地数据加载完后，在通过next函数调用
     next() async {
       String url =
           Address.getEventReceived(userName) + Address.getPageParams("?", page);
@@ -27,6 +34,7 @@ class EventDao {
           return null;
         }
         if (needDb) {
+          /// 更新本地数据
           await provider.insert(json.encode(data));
         }
         for (int i = 0; i < data.length; i++) {

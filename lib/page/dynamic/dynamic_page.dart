@@ -130,6 +130,7 @@ class DynamicPageState extends State<DynamicPage>
       dynamicBloc
           .requestRefresh(_getStore().state.userInfo?.login, doNextFlag: false)
           .then((_) {
+            /// 触发一次下拉刷新，发起网络请求
         showRefreshLoading();
       });
     }

@@ -23,6 +23,7 @@ class GSYUserIconWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // RawMaterialButton: 自定义按钮
     return new RawMaterialButton(
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         padding:

@@ -44,6 +44,7 @@ class ReposItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new Container(
+      // GSYCardItem: 自定义了背景色、圆角、阴影、外边距等
       child: new GSYCardItem(
           child: new TextButton(
               onPressed: onPressed,
@@ -56,7 +57,7 @@ class ReposItem extends StatelessWidget {
                     new Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        ///头像
+                        /// 头像小组件：有fade效果，可以点击
                         new GSYUserIconWidget(
                             padding: const EdgeInsets.only(
                                 top: 0.0, right: 5.0, left: 0.0),
