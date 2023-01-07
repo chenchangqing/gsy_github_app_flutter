@@ -81,6 +81,7 @@ Stream<dynamic> loginEpic(Stream<dynamic> actions, EpicStore<GSYState> store) {
     Navigator.pop(action.context);
     yield LoginSuccessAction(action.context, (res != null && res.result));
   }
+  // switchMap：转换新Stream
   return actions
       .whereType<LoginAction>()
       .switchMap((action) => _loginIn(action, store));

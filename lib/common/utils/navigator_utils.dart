@@ -316,7 +316,7 @@ class NavigatorUtils {
   ///弹出 dialog
   static Future<T?> showGSYDialog<T>({
     required BuildContext context,
-    bool barrierDismissible = true,
+    bool barrierDismissible = true,//点击对话框barrier(遮罩)时是否关闭它
     WidgetBuilder? builder,
   }) {
     return showDialog<T>(
